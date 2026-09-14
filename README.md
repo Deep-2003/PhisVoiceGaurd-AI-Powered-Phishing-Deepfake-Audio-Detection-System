@@ -1,4 +1,4 @@
-# 🔐 PhiVoiceGaurd- AI-Powered Phishing & Deepfake Audio Detection System
+# 🔐 PhisVoiceGaurd- AI-Powered Phishing & Deepfake Audio Detection System
 
 ## 📌 Overview
 
