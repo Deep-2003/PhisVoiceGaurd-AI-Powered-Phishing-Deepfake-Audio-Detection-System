@@ -40,7 +40,7 @@ print("Accuracy:", accuracy_score(y_test, y_pred))
 print("\nClassification Report:\n", classification_report(y_test, y_pred))
 
 # Save model
-pickle.dump(model, open("../models/phishing_model.pkl", "wb"))
-pickle.dump(vectorizer, open("../models/vectorizer.pkl", "wb"))
+pickle.dump(model, open("\phishing_detection\models\phishing_model.pkl", "wb"))
+pickle.dump(vectorizer, open("\phishing_detection\models\vectorizer.pkl", "wb"))
 
 print("\nModel and vectorizer saved successfully!")
