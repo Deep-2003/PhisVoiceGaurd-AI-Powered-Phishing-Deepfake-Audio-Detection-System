@@ -1,471 +1,378 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deepfake Audio Detector | PhisVoiceGuard</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        cyber: {
-                            900: '#0a0a0f',
-                            800: '#12121a',
-                            700: '#1e1e2d',
-                            cyan: '#00f0ff',
-                            red: '#ff2a2a',
-                            green: '#10b981',
-                        }
-                    },
-                    animation: {
-                        'spin-slow': 'spin 3s linear infinite',
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <style>
-        body {
-            background-color: #050508;
-            background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #050508 70%);
-            color: #e2e8f0;
-            min-height: 100vh;
-        }
-
-        .glass-panel {
-            background: rgba(18, 18, 26, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        /* SVG Circular Gauge Animation */
-        .circular-chart {
-            display: block;
-            margin: 0 auto;
-            max-width: 100%;
-            max-height: 250px;
-        }
-        .circle-bg {
-            fill: none;
-            stroke: #1e1e2d;
-            stroke-width: 2.5;
-        }
-        .circle {
-            fill: none;
-            stroke-width: 2.5;
-            stroke-linecap: round;
-            stroke-dasharray: 283, 283; 
-            stroke-dashoffset: 283;
-            transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s ease;
-        }
-
-        /* Custom Scrollbar for the terminal */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0a0a0f; }
-        ::-webkit-scrollbar-thumb { background: #1e1e2d; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PHISVOICEGUARD | Phishing &amp; Deepfake Detection Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050b17; --bg2:#0a1428; --glass:rgba(14,28,52,.62); --line:rgba(80,200,255,.16);
+  --cyan:#22d3ee; --blue:#3b82f6; --text:#e8eef7; --muted:#8fa3bf;
+  --threat:#ff5a4d; --warn:#ff9f1c; --safe:#2ecc71;
+  --sans:"Sora",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html,body{overflow-x:hidden}
+body{font-family:var(--sans);color:var(--text);background:var(--bg);min-height:100vh;display:flex;flex-direction:column;line-height:1.55;
+  background-image:radial-gradient(ellipse at 70% -10%,rgba(34,211,238,.14),transparent 55%),
+  linear-gradient(rgba(80,200,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(80,200,255,.045) 1px,transparent 1px);
+  background-size:auto,44px 44px,44px 44px}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+header.bar{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;padding:.9rem clamp(1rem,4vw,2.5rem);border-bottom:1px solid var(--line);background:rgba(5,11,23,.8);backdrop-filter:blur(10px);position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:.7rem;font-weight:700;letter-spacing:.06em}
+.brand svg{width:30px;height:30px;flex:none}
+.status{display:flex;gap:.5rem;flex-wrap:wrap;font:500 .75rem var(--mono)}
+.pill{display:inline-flex;align-items:center;gap:.45rem;padding:.3rem .65rem;border:1px solid var(--line);border-radius:99px;background:var(--glass);color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill[data-state=ready] .dot{background:var(--safe);box-shadow:0 0 8px var(--safe)}
+.pill[data-state=offline] .dot{background:var(--threat)}
+.pill[data-state=pending] .dot{background:var(--warn)}
+main{flex:1;width:100%;max-width:880px;margin:0 auto;padding:clamp(1.5rem,5vw,3.5rem) 1rem}
+.hero h1{font-size:clamp(1.9rem,6vw,3.2rem);letter-spacing:.04em;line-height:1.1}
+.hero p.sub{color:var(--cyan);margin-top:.5rem;font-weight:600}
+.hero p.desc{color:var(--muted);margin-top:.5rem;max-width:56ch}
+.card{margin-top:1.75rem;padding:clamp(1.1rem,3vw,1.75rem);border:1px solid var(--line);border-radius:14px;background:var(--glass);backdrop-filter:blur(14px);box-shadow:0 10px 40px rgba(0,0,0,.35)}
+label.q{display:block;font-weight:600;margin-bottom:.6rem}
+select,textarea{width:100%;font:inherit;color:var(--text);background:rgba(3,8,18,.75);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+select{font-size:1.05rem;cursor:pointer}
+select:hover,textarea:hover{border-color:rgba(34,211,238,.45)}
+textarea{min-height:200px;resize:vertical;line-height:1.5}
+textarea::placeholder{color:#5f738f}
+.panel{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--line)}
+.panel[hidden],[hidden]{display:none!important}
+.row{display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;margin-top:.7rem}
+.count{font:.78rem var(--mono);color:var(--muted)}
+.actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem}
+button{font:600 .95rem var(--sans);cursor:pointer;border-radius:10px;padding:.7rem 1.3rem;border:1px solid var(--line);color:var(--text);background:transparent;transition:background .15s,border-color .15s,transform .1s;display:inline-flex;align-items:center;gap:.5rem}
+button:hover:not(:disabled){border-color:var(--cyan);background:rgba(34,211,238,.08)}
+button:active:not(:disabled){transform:translateY(1px)}
+button.primary{background:linear-gradient(135deg,var(--cyan),var(--blue));border-color:transparent;color:#03101f}
+button.primary:hover:not(:disabled){filter:brightness(1.1);background:linear-gradient(135deg,var(--cyan),var(--blue))}
+button:disabled{opacity:.45;cursor:not-allowed}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.msg{margin-top:1rem;padding:.8rem 1rem;border-radius:10px;border:1px solid;font-size:.92rem}
+.msg.error{border-color:rgba(255,90,77,.5);background:rgba(255,90,77,.1);color:#ffb4ad}
+.msg.info{border-color:rgba(255,159,28,.45);background:rgba(255,159,28,.08);color:#ffd49a}
+.drop{display:flex;flex-direction:column;align-items:center;gap:.5rem;text-align:center;padding:2rem 1rem;border:2px dashed rgba(34,211,238,.35);border-radius:12px;background:rgba(3,8,18,.45);transition:.15s}
+.drop.over{border-color:var(--cyan);background:rgba(34,211,238,.1);box-shadow:inset 0 0 30px rgba(34,211,238,.12)}
+.drop .hint{color:var(--muted);font-size:.85rem}
+.file{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:1rem;padding:.8rem 1rem;border:1px solid var(--line);border-radius:10px;background:rgba(3,8,18,.5)}
+.file .name{font:500 .88rem var(--mono);overflow-wrap:anywhere}
+.file .size{color:var(--muted);font-size:.78rem}
+audio{width:100%;margin-top:1rem}
+.result{margin-top:1.5rem;padding:1.25rem;border-radius:12px;border:1px solid var(--line);background:rgba(3,8,18,.6);border-left:4px solid var(--muted)}
+.result[data-tone=threat]{border-left-color:var(--threat)}
+.result[data-tone=safe]{border-left-color:var(--safe)}
+.result[data-tone=warn]{border-left-color:var(--warn)}
+.verdict{font-size:clamp(1.4rem,4vw,2rem);font-weight:700;letter-spacing:.04em}
+.result[data-tone=threat] .verdict{color:var(--threat)}
+.result[data-tone=safe] .verdict{color:var(--safe)}
+.result[data-tone=warn] .verdict{color:var(--warn)}
+.explain{color:var(--muted);margin-top:.4rem}
+.meter{height:6px;border-radius:99px;background:rgba(255,255,255,.08);margin:1rem 0;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--cyan);transition:width .6s ease}
+.result[data-tone=threat] .meter i{background:var(--threat)}
+.result[data-tone=safe] .meter i{background:var(--safe)}
+dl.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.9rem}
+dl.meta dt{font-size:.75rem;color:var(--muted)}
+dl.meta dd{font:500 .95rem var(--mono);overflow-wrap:anywhere}
+footer{padding:1.25rem;text-align:center;color:#5f738f;font-size:.78rem;border-top:1px solid var(--line)}
+@media(max-width:560px){.actions button{flex:1;justify-content:center}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important}}
+</style>
 </head>
-<body class="overflow-x-hidden selection:bg-cyber-cyan selection:text-black flex flex-col">
+<body>
+<header class="bar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" fill="none" stroke="#22d3ee" stroke-width="2" aria-hidden="true"><path d="M16 3 5 7v8c0 7 5 12 11 14 6-2 11-7 11-14V7L16 3Z"/><path d="M10 16h3l2-4 3 8 2-4h2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>PHISVOICEGUARD</span>
+  </div>
+  <div class="status" role="status" aria-label="Backend status">
+    <span class="pill" id="st-phish" data-state="pending"><span class="dot"></span>Text engine: checking</span>
+    <span class="pill" id="st-audio" data-state="pending"><span class="dot"></span>Audio engine: not connected</span>
+  </div>
+</header>
 
-    <nav class="w-full border-b border-cyber-700 bg-cyber-900/80 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-cyan-500/10 border border-cyan-400 flex items-center justify-center shadow-[0_0_10px_rgba(6,182,212,0.3)]">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-widest text-white">PHISVOICE<span class="text-cyan-400">GUARD</span></h1>
-                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400">Deepfake Audio Detection System</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-4 text-xs font-mono">
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    SYSTEM ONLINE
-                </div>
-            </div>
-        </div>
-    </nav>
+<main>
+  <section class="hero">
+    <h1>PHISVOICEGUARD</h1>
+    <p class="sub">AI-Powered Phishing &amp; Deepfake Detection Platform</p>
+    <p class="desc">Analyze suspicious messages and audio for AI-assisted security threats.</p>
+  </section>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
-            
-            <!-- LEFT PANEL: Upload & Logs -->
-            <div class="lg:col-span-5 space-y-6 flex flex-col">
-                
-                <!-- Upload Box -->
-                <div class="glass-panel rounded-xl p-6 relative overflow-hidden transition-all duration-300">
-                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                        Target Audio File
-                    </h2>
-                    
-                    <input type="file" id="audioFile" accept=".wav, .mp3, .ogg, .m4a" class="hidden">
-                    
-                    <div id="dropZone" class="border-2 border-dashed border-slate-700 hover:border-cyan-400 bg-slate-800/30 hover:bg-cyan-900/10 rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 text-center group">
-                        <div class="p-3 bg-slate-900/80 rounded-full mb-3 shadow-lg border border-slate-700 group-hover:border-cyan-400/50 transition-colors">
-                            <svg class="w-8 h-8 text-slate-400 group-hover:text-cyan-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
-                        </div>
-                        <p class="text-sm font-semibold text-slate-200">Drag & Drop Audio</p>
-                        <p class="text-xs text-slate-500 mt-1">or click to browse (.WAV, .MP3, .M4A)</p>
-                        <p id="fileNameDisplay" class="text-xs text-cyan-400 mt-3 font-mono"></p>
-                    </div>
+  <section class="card" aria-labelledby="mode-label">
+    <label class="q" id="mode-label" for="mode">What would you like to analyze?</label>
+    <select id="mode">
+      <option value="" selected disabled>Select an analysis type…</option>
+      <option value="text">📝 Suspicious Text</option>
+      <option value="audio">🎙 Deepfake Audio</option>
+    </select>
 
-                    <div id="playerContainer" class="hidden mt-4 bg-slate-900/50 p-3 rounded-lg border border-slate-800">
-                        <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-2">Waveform Preview</p>
-                        <audio id="audioPreview" controls class="w-full h-10 rounded outline-none"></audio>
-                    </div>
-                </div>
+    <!-- TEXT MODE -->
+    <div class="panel" id="panel-text" hidden>
+      <label class="q" for="text-input">Message to analyze</label>
+      <textarea id="text-input" maxlength="10000" placeholder="Paste a suspicious email, SMS, chat message or any other text here. Include the full message, links and sender wording if you have them."></textarea>
+      <div class="row"><span class="count" id="text-count" aria-live="polite">0 / 10000 characters</span></div>
+      <div class="actions">
+        <button class="primary" id="text-analyze" type="button">Analyze text</button>
+        <button id="text-clear" type="button">Clear</button>
+      </div>
+      <div id="text-feedback" aria-live="polite"></div>
+      <section class="result" id="text-result" hidden aria-labelledby="tr-verdict" data-tone="neutral">
+        <div class="verdict" id="tr-verdict"></div>
+        <p class="explain" id="tr-explain"></p>
+        <div class="meter" role="img" aria-label="Confidence"><i id="tr-bar"></i></div>
+        <dl class="meta">
+          <div><dt>Confidence</dt><dd id="tr-conf"></dd></div>
+          <div><dt>Risk level</dt><dd id="tr-risk"></dd></div>
+          <div><dt>Model</dt><dd id="tr-model"></dd></div>
+          <div><dt>Analyzed</dt><dd id="tr-time"></dd></div>
+          <div><dt>Characters</dt><dd id="tr-len"></dd></div>
+        </dl>
+      </section>
+    </div>
 
-                <!-- Scan Button -->
-                <button id="scanBtn" disabled class="w-full relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed">
-                    <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent group-hover:from-cyan-500/30 transition-colors"></div>
-                    <div class="glass-panel border-cyan-500/40 p-4 rounded-lg text-center flex items-center justify-center gap-3 transition-all group-hover:border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.1)]">
-                        <svg class="w-5 h-5 text-cyan-400 group-disabled:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                        <span class="font-bold tracking-wider text-white text-sm group-disabled:text-slate-400" id="btnText">RUN AI DIAGNOSTICS</span>
-                    </div>
-                </button>
+    <!-- AUDIO MODE -->
+    <div class="panel" id="panel-audio" hidden>
+      <div class="msg info" id="audio-backend-note" role="status"></div>
+      <div class="drop" id="drop" style="margin-top:1rem">
+        <strong>Drag and drop an audio file here</strong>
+        <span class="hint">or</span>
+        <button type="button" id="browse">Browse files</button>
+        <span class="hint" id="formats-hint"></span>
+        <input type="file" id="file-input" hidden>
+      </div>
+      <div class="file" id="file-info" hidden>
+        <div><div class="name" id="file-name"></div><div class="size" id="file-size"></div></div>
+        <button type="button" id="file-remove" aria-label="Remove selected file">Remove</button>
+      </div>
+      <audio id="preview" controls hidden aria-label="Selected audio preview"></audio>
+      <div class="actions">
+        <button class="primary" id="audio-analyze" type="button">Analyze audio</button>
+      </div>
+      <div id="audio-feedback" aria-live="polite"></div>
+      <section class="result" id="audio-result" hidden aria-labelledby="ar-verdict" data-tone="neutral">
+        <div class="verdict" id="ar-verdict"></div>
+        <p class="explain" id="ar-explain"></p>
+        <div class="meter" role="img" aria-label="Confidence"><i id="ar-bar"></i></div>
+        <dl class="meta">
+          <div><dt>Confidence</dt><dd id="ar-conf"></dd></div>
+          <div><dt>Risk level</dt><dd id="ar-risk"></dd></div>
+          <div><dt>Model</dt><dd id="ar-model"></dd></div>
+          <div><dt>File</dt><dd id="ar-file"></dd></div>
+          <div><dt>Analyzed</dt><dd id="ar-time"></dd></div>
+        </dl>
+      </section>
+    </div>
+  </section>
+</main>
+<footer>PHISVOICEGUARD · Final-year cybersecurity project · Results are decision support, not proof.</footer>
 
-                <div class="glass-panel rounded-xl flex flex-col overflow-hidden flex-grow min-h-[200px] border-t-2 border-t-slate-700">
-                    <div class="bg-slate-900/80 px-4 py-2 flex items-center justify-between border-b border-slate-800">
-                        <div class="flex items-center gap-2">
-                            <div class="flex gap-1.5">
-                                <div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
-                            </div>
-                            <span class="text-[10px] text-slate-500 uppercase ml-2 font-mono">Live System Terminal</span>
-                        </div>
-                    </div>
-                    <div class="p-4 overflow-y-auto h-full text-xs font-mono space-y-2" id="logStream">
-                        <div class="text-slate-400">>> PhisVoiceGuard: Deepfake Detection Module loaded.</div>
-                        <div class="text-cyan-400 opacity-80">>> Waiting for audio input target...</div>
-                    </div>
-                </div>
-            </div>
+<script>
+"use strict";
+/* ============ CONFIG (single place to edit) ============ */
+const API_BASE_URL = "http://127.0.0.1:8000";
+const ENDPOINTS = {
+  phishing: "/api/predict-phishing",
+  audio: null            // Set e.g. "/api/predict-audio" once the audio backend is finalized.
+};
+const AUDIO_FIELD_NAME = "file";   // multipart field name; confirm with backend team.
+const MAX_TEXT_LENGTH = 10000;
+const ALLOWED_AUDIO_EXT = [".wav", ".mp3", ".flac", ".ogg", ".m4a"];
+const MAX_AUDIO_MB = 20;
 
-            <!-- RIGHT PANEL: Results -->
-            <div class="lg:col-span-7 space-y-6">
-                <div id="mainResultsCard" class="glass-panel rounded-xl p-8 relative min-h-[500px] h-full flex flex-col justify-center border-t-4 border-t-slate-700 transition-colors duration-500">
-                    
-                    <!-- 1. Placeholder State -->
-                    <div id="placeholderView" class="flex flex-col items-center justify-center text-center h-full">
-                        <div class="p-6 bg-slate-900/50 rounded-full mb-6 border border-slate-800 shadow-inner">
-                            <svg class="w-16 h-16 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-400 tracking-wider">AWAITING AUDIO SAMPLE</h3>
-                        <p class="text-sm text-slate-500 mt-3 max-w-sm">Upload a suspicious audio file to extract acoustic features and calculate the biometric deepfake probability score.</p>
-                    </div>
+/* ============ DOM helpers ============ */
+const $ = (id) => document.getElementById(id);
+function setText(id, value){ $(id).textContent = value; }   // textContent only: never innerHTML
 
-                    <!-- 2. Loading State -->
-                    <div id="loadingView" class="hidden flex-col items-center justify-center text-center absolute inset-0 z-10 bg-slate-900/90 backdrop-blur-md rounded-xl">
-                        <div class="relative w-28 h-28 mb-8">
-                            <div class="absolute inset-0 border-4 border-cyan-500/20 rounded-full"></div>
-                            <div class="absolute inset-0 border-4 border-t-cyan-400 rounded-full animate-spin"></div>
-                            <div class="absolute inset-0 border-4 border-b-cyan-400 rounded-full animate-spin-slow opacity-50"></div>
-                            <svg class="absolute inset-0 m-auto w-10 h-10 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-cyan-400 font-mono tracking-widest animate-pulse">ANALYZING BIOMETRICS...</h3>
-                        <p class="text-xs text-slate-500 font-mono mt-3" id="loadingSubtext">Extracting MFCCs & Spectral Flatness</p>
-                    </div>
+function showLoading(btn, label){
+  btn.disabled = true; btn.dataset.label = btn.textContent;
+  btn.textContent = "";
+  const s = document.createElement("span"); s.className = "spin"; s.setAttribute("aria-hidden","true");
+  btn.append(s, document.createTextNode(label));
+}
+function hideLoading(btn){ btn.disabled = false; btn.textContent = btn.dataset.label || btn.textContent; }
+function showMessage(boxId, text, kind){
+  const box = $(boxId); box.textContent = "";
+  const d = document.createElement("div"); d.className = "msg " + kind; d.textContent = text; box.append(d);
+}
+function showError(boxId, text){ showMessage(boxId, text, "error"); }
+function clearMessage(boxId){ $(boxId).textContent = ""; }
 
-                    <!-- 3. Results State -->
-                    <div id="resultsView" class="hidden w-full h-full flex-col justify-center">
-                        
-                        <div class="flex flex-col md:flex-row items-center gap-10 mb-10">
-                            <!-- SVG Gauge -->
-                            <div class="relative w-52 h-52 flex-shrink-0">
-                                <div id="threatGlow" class="absolute inset-0 rounded-full blur-3xl transition-colors duration-500"></div>
-                                <svg viewBox="0 0 36 36" class="circular-chart w-full h-full relative z-10 drop-shadow-2xl">
-                                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                                    <path id="gaugeStroke" class="circle" stroke-dasharray="283, 283" stroke-dashoffset="283" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="#334155"/>
-                                </svg>
-                                <div class="absolute inset-0 flex flex-col items-center justify-center z-20">
-                                    <span id="threatScoreText" class="text-5xl font-bold font-mono text-slate-400 transition-colors duration-500">0%</span>
-                                    <span class="text-[10px] uppercase tracking-widest text-slate-400 mt-2 font-semibold">Threat Score</span>
-                                </div>
-                            </div>
+/* ============ Validation ============ */
+function validateText(text){
+  if (!text.trim()) return "Enter or paste some text before analyzing.";
+  if (text.length > MAX_TEXT_LENGTH) return "Text is too long. Limit is " + MAX_TEXT_LENGTH + " characters.";
+  return null;
+}
+function fileExt(name){ const i = name.lastIndexOf("."); return i < 0 ? "" : name.slice(i).toLowerCase(); }
+function validateAudio(file){
+  if (!file) return "Select an audio file before analyzing.";
+  if (!ALLOWED_AUDIO_EXT.includes(fileExt(file.name))) return "Unsupported file type. Use: " + ALLOWED_AUDIO_EXT.join(", ") + ".";
+  if (file.size > MAX_AUDIO_MB * 1024 * 1024) return "File is larger than " + MAX_AUDIO_MB + " MB.";
+  if (file.size === 0) return "The selected file is empty.";
+  return null;
+}
 
-                            <div class="flex-grow text-center md:text-left">
-                                <h3 class="text-xs font-bold text-slate-500 tracking-widest mb-2 uppercase">Deepfake System Verdict</h3>
-                                <div id="verdictText" class="text-3xl font-bold font-mono tracking-tight text-slate-300 mb-4 transition-colors duration-500">
-                                    ---
-                                </div>
-                                <p id="verdictDesc" class="text-sm text-slate-400 leading-relaxed border-l-2 border-slate-700 pl-4 transition-colors duration-500">
-                                    Biometric scanning finished. View the acoustic markers below for detailed breakdown.
-                                </p>
-                            </div>
-                        </div>
+/* ============ API service layer (no mock data) ============ */
+class BackendNotConnectedError extends Error {}
+async function parseResponse(res){
+  let body = null;
+  try { body = await res.json(); } catch (_) { /* non-JSON body */ }
+  if (!res.ok) {
+    const detail = body && (body.detail || body.error || body.message);
+    throw new Error(typeof detail === "string" ? detail : "Request failed with status " + res.status + ".");
+  }
+  if (!body || typeof body !== "object") throw new Error("Server returned an unreadable response.");
+  return body;
+}
+async function analyzePhishingText(text){
+  let res;
+  try {
+    res = await fetch(API_BASE_URL + ENDPOINTS.phishing, {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ text })
+    });
+  } catch (_) { throw new Error("Cannot reach the analysis server at " + API_BASE_URL + ". Check that the backend is running."); }
+  return parseResponse(res);
+}
+async function analyzeAudio(file){
+  if (!ENDPOINTS.audio) throw new BackendNotConnectedError("The audio detection backend is not connected yet. No analysis was performed.");
+  const form = new FormData(); form.append(AUDIO_FIELD_NAME, file);
+  let res;
+  try { res = await fetch(API_BASE_URL + ENDPOINTS.audio, { method: "POST", body: form }); }
+  catch (_) { throw new Error("Cannot reach the audio analysis server at " + API_BASE_URL + "."); }
+  return parseResponse(res);
+}
+async function checkBackendStatus(){
+  // Only reports reachability of the server; it does not fabricate any detection result.
+  const el = $("st-phish");
+  try {
+    await fetch(API_BASE_URL + "/", { method: "GET" });
+    el.dataset.state = "ready"; el.lastChild.textContent = "Text engine: server reachable";
+  } catch (_) {
+    el.dataset.state = "offline"; el.lastChild.textContent = "Text engine: unreachable";
+  }
+}
 
-                        <div class="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
-                            <h4 class="text-[10px] uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                                Extracted Acoustic Features
-                            </h4>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div>
-                                    <p class="text-[10px] uppercase text-slate-500 font-bold mb-1">Pitch Jitter</p>
-                                    <p class="text-lg font-mono text-slate-200"><span id="metricJitter">0.00</span><span class="text-xs text-slate-600 ml-1">Hz</span></p>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] uppercase text-slate-500 font-bold mb-1">Spectral Flatness</p>
-                                    <p class="text-lg font-mono text-slate-200" id="metricFlatness">0.00</p>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] uppercase text-slate-500 font-bold mb-1">Centroid Var</p>
-                                    <p class="text-lg font-mono text-slate-200" id="metricCentroid">0</p>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] uppercase text-slate-500 font-bold mb-1">Duration Analyzed</p>
-                                    <p class="text-lg font-mono text-slate-200"><span id="metricDuration">0.00</span><span class="text-xs text-slate-600 ml-1">s</span></p>
-                                </div>
-                            </div>
-                        </div>
+/* ============ Result rendering (values come only from the API) ============ */
+function toneFromLabel(label){
+  // Based solely on the label string the backend supplies, never on 0/1.
+  const l = String(label || "").toLowerCase();
+  if (/(phish|spam|scam|malicious|fraud|fake|deepfake|synthetic|spoof)/.test(l)) return "threat";
+  if (/(safe|legit|benign|ham|genuine|real|bona|authentic|human)/.test(l)) return "safe";
+  return "neutral";
+}
+function fmtConfidence(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : null;
+}
+function fillResult(prefix, containerId, r, extra){
+  const conf = fmtConfidence(r.confidence);
+  const label = r.label != null ? String(r.label) : null;
+  const tone = toneFromLabel(label);
+  const box = $(containerId); box.dataset.tone = tone;
+  setText(prefix + "verdict", label ? label.toUpperCase() : "Verdict not provided");
+  setText(prefix + "explain", r.explanation || r.message || "Result returned by the analysis service.");
+  setText(prefix + "conf", conf === null ? "Not provided" : conf.toFixed(2) + "%");
+  $(prefix + "bar").style.width = (conf === null ? 0 : conf) + "%";
+  setText(prefix + "risk", r.risk_level || "Not provided by backend");
+  setText(prefix + "model", r.model || "Not provided");
+  setText(prefix + "time", new Date().toLocaleString());
+  Object.entries(extra).forEach(([id, v]) => setText(prefix + id, v));
+  box.hidden = false;
+}
+function renderPhishingResult(result, text){ fillResult("tr-", "text-result", result, { len: String(text.length) }); }
+function renderAudioResult(result, file){ fillResult("ar-", "audio-result", result, { file: file.name }); }
 
-                    </div>
+/* ============ UI controller ============ */
+const state = { file: null, previewUrl: null };
 
-                </div>
-            </div>
-        </div>
-    </main>
+function resetText(){
+  $("text-input").value = ""; updateCount(); $("text-result").hidden = true; clearMessage("text-feedback");
+}
+function resetAudio(){
+  state.file = null;
+  if (state.previewUrl) { URL.revokeObjectURL(state.previewUrl); state.previewUrl = null; }
+  $("file-input").value = ""; $("file-info").hidden = true;
+  const p = $("preview"); p.pause(); p.removeAttribute("src"); p.load(); p.hidden = true;
+  $("audio-result").hidden = true; clearMessage("audio-feedback");
+}
+function updateCount(){ setText("text-count", $("text-input").value.length + " / " + MAX_TEXT_LENGTH + " characters"); }
 
-    <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('audioFile');
-        const scanBtn = document.getElementById('scanBtn');
-        const btnText = document.getElementById('btnText');
-        const fileNameDisplay = document.getElementById('fileNameDisplay');
-        const audioPreview = document.getElementById('audioPreview');
-        const playerContainer = document.getElementById('playerContainer');
+function selectMode(mode){
+  resetText(); resetAudio();
+  $("panel-text").hidden = mode !== "text";
+  $("panel-audio").hidden = mode !== "audio";
+}
 
-        const placeholderView = document.getElementById('placeholderView');
-        const loadingView = document.getElementById('loadingView');
-        const resultsView = document.getElementById('resultsView');
-        const logStream = document.getElementById('logStream');
-        const mainResultsCard = document.getElementById('mainResultsCard');
+function setAudioFile(file){
+  clearMessage("audio-feedback"); $("audio-result").hidden = true;
+  const err = validateAudio(file);
+  if (err) { resetAudio(); showError("audio-feedback", err); return; }
+  state.file = file;
+  setText("file-name", file.name);
+  setText("file-size", (file.size / 1048576).toFixed(2) + " MB");
+  $("file-info").hidden = false;
+  if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
+  state.previewUrl = URL.createObjectURL(file);
+  const p = $("preview"); p.src = state.previewUrl; p.hidden = false;
+}
 
-        let selectedFile = null;
+async function onAnalyzeText(){
+  const text = $("text-input").value;
+  clearMessage("text-feedback"); $("text-result").hidden = true;
+  const err = validateText(text);
+  if (err) { showError("text-feedback", err); $("text-input").focus(); return; }
+  const btn = $("text-analyze"); showLoading(btn, "Analyzing…");
+  try { renderPhishingResult(await analyzePhishingText(text), text); }
+  catch (e) { showError("text-feedback", e.message); }
+  finally { hideLoading(btn); }
+}
 
-        // --- Terminal Log Helper ---
-        function addLog(message) {
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: "numeric", minute: "numeric", second: "numeric" });
-            const logItem = document.createElement('div');
-            logItem.className = 'text-slate-300';
-            logItem.innerHTML = `<span class="text-slate-600">[${time}]</span> > ${message}`;
-            logStream.appendChild(logItem);
-            logStream.scrollTop = logStream.scrollHeight; // Auto-scroll to bottom
-        }
+async function onAnalyzeAudio(){
+  clearMessage("audio-feedback"); $("audio-result").hidden = true;
+  const err = validateAudio(state.file);
+  if (err) { showError("audio-feedback", err); return; }
+  const btn = $("audio-analyze"); showLoading(btn, "Uploading…");
+  try { renderAudioResult(await analyzeAudio(state.file), state.file); }
+  catch (e) {
+    if (e instanceof BackendNotConnectedError) showMessage("audio-feedback", e.message, "info");
+    else showError("audio-feedback", e.message);
+  }
+  finally { hideLoading(btn); }
+}
 
-        // --- 1. CLICK TO UPLOAD ---
-        dropZone.addEventListener('click', () => fileInput.click());
+function init(){
+  setText("formats-hint", "Supported: " + ALLOWED_AUDIO_EXT.join(", ") + " · max " + MAX_AUDIO_MB + " MB");
+  $("file-input").accept = ALLOWED_AUDIO_EXT.join(",");
+  const connected = Boolean(ENDPOINTS.audio);
+  setText("audio-backend-note", connected
+    ? "Audio backend endpoint is configured."
+    : "Audio detection backend is not connected yet. You can select and preview files, but analysis is unavailable until the API is configured.");
+  const sa = $("st-audio");
+  sa.dataset.state = connected ? "ready" : "pending";
+  sa.lastChild.textContent = connected ? "Audio engine: configured" : "Audio engine: not connected";
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) handleFileSelect(e.target.files[0]);
-        });
+  $("mode").addEventListener("change", (e) => selectMode(e.target.value));
+  $("text-input").addEventListener("input", updateCount);
+  $("text-analyze").addEventListener("click", onAnalyzeText);
+  $("text-clear").addEventListener("click", () => { resetText(); $("text-input").focus(); });
 
-        // --- 2. DRAG AND DROP FUNCTIONALITY ---
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-cyan-400', 'bg-cyan-900/10');
-        });
+  const drop = $("drop");
+  $("browse").addEventListener("click", () => $("file-input").click());
+  $("file-input").addEventListener("change", (e) => { if (e.target.files[0]) setAudioFile(e.target.files[0]); });
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => { const f = e.dataTransfer.files[0]; if (f) setAudioFile(f); });
+  $("file-remove").addEventListener("click", resetAudio);
+  $("audio-analyze").addEventListener("click", onAnalyzeAudio);
 
-        dropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-cyan-400', 'bg-cyan-900/10');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-cyan-400', 'bg-cyan-900/10');
-            if (e.dataTransfer.files.length > 0) {
-                fileInput.files = e.dataTransfer.files;
-                handleFileSelect(e.dataTransfer.files[0]);
-            }
-        });
-
-        function handleFileSelect(file) {
-            selectedFile = file;
-            fileNameDisplay.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-            
-            // Load audio into HTML player
-            audioPreview.src = URL.createObjectURL(file);
-            playerContainer.classList.remove('hidden');
-            
-            // Enable Button
-            scanBtn.disabled = false;
-            scanBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            
-            addLog(`Audio loaded into system buffer: ${file.name}`);
-        }
-
-        // --- STREAMING_CHUNK:Handling Backend API & Fallback Simulation ---
-        scanBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
-
-            // Update UI for Loading state
-            placeholderView.classList.add('hidden');
-            resultsView.classList.add('hidden');
-            loadingView.classList.remove('hidden');
-            loadingView.classList.add('flex');
-            
-            scanBtn.disabled = true;
-            btnText.textContent = "ANALYZING BIOMETRICS...";
-            
-            // Reset card styling
-            mainResultsCard.className = "glass-panel rounded-xl p-8 relative min-h-[500px] h-full flex flex-col justify-center border-t-4 border-t-slate-700 transition-colors duration-500";
-
-            addLog('Connecting to PhisVoiceGuard Python Backend...');
-            addLog('Extracting acoustic features (MFCCs, Spectral Centroid)...');
-
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-
-            try {
-                // Set a 15-second timeout so the UI never hangs forever
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-                const response = await fetch('http://127.0.0.1:8000/api/analyze', {
-                    method: 'POST',
-                    body: formData,
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({}));
-                    throw new Error(err.detail || `Server Error ${response.status}`);
-                }
-
-                const data = await response.json();
-                addLog('Analysis successful. Rendering results.');
-                displayResults(data);
-
-            } catch (error) {
-                // === SMART FALLBACK SYSTEM ===
-                // If it fails to connect to Python backend (Browser blocked it, Server crashed, or Timeout), 
-                // we trigger a realistic Backup Simulation so your presentation still works perfectly!
-                
-                let errorMsg = error.message;
-                if (window.location.protocol === "https:") {
-                    errorMsg = "Browser blocked connection (HTTPS to HTTP). Must run locally.";
-                } else if (error.name === 'AbortError' || error.message.includes('fetch')) {
-                    errorMsg = "Connection timed out. Python backend is offline or blocked.";
-                }
-
-                console.error("Scan Error:", error);
-                addLog(`<span class="text-red-400 font-bold">ERROR: ${errorMsg}</span>`);
-                addLog(`<span class="text-yellow-400 font-bold">Initializing Offline AI Simulation Fallback for demonstration...</span>`);
-                
-                // Simulate backend delay
-                setTimeout(() => {
-                    // Randomly choose real or fake based on file name or random chance
-                    const isSynthetic = selectedFile.name.toLowerCase().includes('fake') || Math.random() > 0.5; 
-                    
-                    const mockData = {
-                        is_deepfake: isSynthetic,
-                        deepfake_probability: isSynthetic ? Math.floor(Math.random() * (99 - 85) + 85) : Math.floor(Math.random() * (15 - 1) + 1),
-                        acoustic_analysis: {
-                            duration_seconds: (selectedFile.size / 150000).toFixed(2), // Rough estimate
-                            pitch_jitter_hz: isSynthetic ? (Math.random() * 80 + 20).toFixed(2) : (Math.random() * 100 + 150).toFixed(2),
-                            spectral_flatness: isSynthetic ? (Math.random() * 0.05 + 0.02).toFixed(6) : (Math.random() * 0.01 + 0.001).toFixed(6),
-                            centroid_variance: isSynthetic ? Math.floor(Math.random() * 500 + 100) : Math.floor(Math.random() * 1500 + 900),
-                        }
-                    };
-                    addLog('Simulation complete. Rendering results.');
-                    displayResults(mockData);
-                }, 2500);
-
-            } finally {
-                scanBtn.disabled = false;
-                btnText.textContent = "RUN NEW SCAN";
-            }
-        });
-
-        // --- STREAMING_CHUNK:Rendering UI Results ---
-        function displayResults(data) {
-            loadingView.classList.add('hidden');
-            loadingView.classList.remove('flex');
-            resultsView.classList.remove('hidden');
-            resultsView.classList.add('flex');
-            
-            const threatGlow = document.getElementById('threatGlow');
-            const gaugeStroke = document.getElementById('gaugeStroke');
-            const threatScoreText = document.getElementById('threatScoreText');
-            const verdictText = document.getElementById('verdictText');
-            const verdictDesc = document.getElementById('verdictDesc');
-            
-            // Populate Metrics Data
-            document.getElementById('metricDuration').textContent = data.acoustic_analysis.duration_seconds;
-            document.getElementById('metricJitter').textContent = data.acoustic_analysis.pitch_jitter_hz;
-            document.getElementById('metricFlatness').textContent = data.acoustic_analysis.spectral_flatness;
-            document.getElementById('metricCentroid').textContent = data.acoustic_analysis.centroid_variance;
-            
-            const prob = data.deepfake_probability;
-            
-            // Animate SVG Gauge
-            const offset = 283 - (283 * prob) / 100;
-            gaugeStroke.style.strokeDashoffset = 283; // Reset
-            setTimeout(() => {
-                gaugeStroke.style.strokeDashoffset = offset;
-            }, 100);
-
-            // Animate Number Counter
-            let currentNum = 0;
-            const interval = setInterval(() => {
-                currentNum += 2;
-                if(currentNum >= prob) {
-                    currentNum = prob;
-                    clearInterval(interval);
-                }
-                threatScoreText.textContent = `${currentNum}%`;
-            }, 25);
-
-            // Apply Conditional Cyberpunk Styling (RED = Deepfake, GREEN = Authentic)
-            if (data.is_deepfake) {
-                mainResultsCard.className = "glass-panel rounded-xl p-8 relative min-h-[500px] h-full flex flex-col justify-center border-t-4 transition-colors duration-500 border-t-red-500 bg-red-950/20";
-                threatGlow.className = "absolute inset-0 bg-red-500/30 rounded-full blur-3xl animate-pulse transition-colors duration-500";
-                gaugeStroke.style.stroke = "#ef4444"; 
-                threatScoreText.className = "text-5xl font-bold font-mono text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] z-10 transition-colors duration-500";
-                
-                verdictText.textContent = "SYNTHETIC ANOMALY DETECTED";
-                verdictText.className = "text-2xl md:text-3xl font-bold font-mono tracking-tight text-red-500 mb-4 transition-colors duration-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]";
-                
-                verdictDesc.innerHTML = "CRITICAL: The analyzed audio exhibits highly synthetic characteristics. <strong>Lack of natural vocal cord micro-tremors detected.</strong>";
-                verdictDesc.className = "text-sm text-red-300 leading-relaxed border-l-2 border-red-500 pl-4 transition-colors duration-500";
-                
-                addLog('<span class="text-red-400 font-bold">VERDICT: Synthetic Audio Detected. Probable Phishing Attempt.</span>');
-            } else {
-                mainResultsCard.className = "glass-panel rounded-xl p-8 relative min-h-[500px] h-full flex flex-col justify-center border-t-4 transition-colors duration-500 border-t-emerald-500 bg-emerald-950/20";
-                threatGlow.className = "absolute inset-0 bg-emerald-500/20 rounded-full blur-3xl transition-colors duration-500";
-                gaugeStroke.style.stroke = "#10b981"; 
-                threatScoreText.className = "text-5xl font-bold font-mono text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)] z-10 transition-colors duration-500";
-                
-                verdictText.textContent = "AUTHENTIC HUMAN VOICE";
-                verdictText.className = "text-2xl md:text-3xl font-bold font-mono tracking-tight text-emerald-400 mb-4 transition-colors duration-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]";
-                
-                verdictDesc.innerHTML = "VERIFIED: The acoustic markers align with authentic human speech patterns. Natural pitch variance is present.";
-                verdictDesc.className = "text-sm text-emerald-300/80 leading-relaxed border-l-2 border-emerald-500 pl-4 transition-colors duration-500";
-                
-                addLog('<span class="text-emerald-400 font-bold">VERDICT: Authentic Human Voice Verified. Safe.</span>');
-            }
-        }
-    </script>
+  checkBackendStatus();
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
 </body>
 </html>
